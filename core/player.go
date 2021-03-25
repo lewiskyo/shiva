@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 	"shiva/iface"
-	"shiva/proto"
 	"shiva/pb"
+	"shiva/proto"
 	"sync"
 )
 
@@ -80,7 +80,7 @@ func (p *Player) SyncPid() {
 func (p *Player) BroadCastStartPosition() {
 	msg := &pb.BroadCast{
 		Pid: p.Pid,
-		Tp:  3, //TP 2 代表广播坐标
+		Tp:  2, //TP 2 代表广播坐标
 		Data: &pb.BroadCast_P{
 			P: &pb.Position{
 				X: p.X,
@@ -93,4 +93,18 @@ func (p *Player) BroadCastStartPosition() {
 
 	//发送数据给客户端
 	p.SendMsg(200, msg)
+}
+
+// 玩家广播聊天消息
+func (p *Player) Talk(content string) {
+	msg := &pb.BroadCast{
+		Pid:  p.Pid,
+		Tp:   1,
+		Data: &pb.BroadCast_Content{Content: content},
+	}
+
+	players := WorldMgrObj.GetAllPlayers()
+	for _, p := range players {
+		p.SendMsg(200, msg)
+	}
 }

@@ -1,5 +1,6 @@
 syntax="proto3";                //Proto协议
 package pb;                     //当前包名
+option csharp_namespace="Pb";   //给C#提供的选项
 
 //同步客户端玩家ID
 message SyncPid{
@@ -23,4 +24,9 @@ message BroadCast{
         Position P=4;        //广播用户的位置
 		int32 ActionData=5;
         }
+}
+
+// 世界聊天
+message Talk{
+    string Content = 1;
 }

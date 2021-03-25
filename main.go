@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"shiva/iface"
+	"shiva/apis"
 	"shiva/core"
+	"shiva/iface"
 	"shiva/net"
 )
 
@@ -17,6 +18,10 @@ func OnConnectionAdd(conn iface.IConnection) {
 	// 给客户端发送MsgID:200的消息
 	player.BroadCastStartPosition()
 
+	core.WorldMgrObj.AddPlayer(player)
+
+	conn.SetProperty("pid", player.Pid)
+
 	fmt.Println("player pid: ", player.Pid, " is login!!!")
 }
 
@@ -29,6 +34,8 @@ func main() {
 
 	s.SetOnConnStart(OnConnectionAdd)
 	s.SetOnConnStop(DoConnectionStop)
+
+	s.AddRouter(2, &apis.WorldChatApi{})
 
 	s.Serve()
 }
