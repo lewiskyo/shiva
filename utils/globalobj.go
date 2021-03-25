@@ -3,7 +3,6 @@ package utils
 import (
 	"encoding/json"
 	"io/ioutil"
-	"shiva/iface"
 )
 
 // 存储一切有关服务器的全局参数,供其他模块使用
@@ -11,7 +10,6 @@ import (
 
 type GlobalObj struct {
 	// Server
-	TcpServer iface.IServer // 当前server全局的Server对象
 	Host      string        // 当前服务器主机监听的IP
 	TcpPort   int           // 当前服务器主机监听的端口
 	Name      string        // 当前服务器名称
@@ -42,7 +40,6 @@ func (g *GlobalObj) Reload() {
 func init() {
 	// 如果配置文件没加载的默认值
 	GlobalObject = &GlobalObj{
-		TcpServer:        nil,
 		Host:             "0.0.0.0",
 		TcpPort:          8999,
 		Name:             "server demo",
