@@ -18,11 +18,13 @@ type Server struct {
 	Port int
 	// 当前server的消息管理模块, 用来绑定MsgID和对应处理业务API关系
 	MsgHandler iface.IMsgHandler
+	// 当前server的链接管理器
+	ConnMgr iface.IConnManager
 }
 
 func (s *Server) Start() {
-	fmt.Printf("[Zinx] ServerName: %s, listen at ip: %s, port: %d\n", utils.GlobalObject.Name, utils.GlobalObject.Host, utils.GlobalObject.TcpPort)
-	fmt.Printf("[Zinx] Version: %s, maxconn: %d, maxpackagesize: %d\n", utils.GlobalObject.Version, utils.GlobalObject.MaxConn, utils.GlobalObject.MaxPackageSize)
+	fmt.Printf("[Shiva] ServerName: %s, listen at ip: %s, port: %d\n", utils.GlobalObject.Name, utils.GlobalObject.Host, utils.GlobalObject.TcpPort)
+	fmt.Printf("[Shiva] Version: %s, maxconn: %d, maxpackagesize: %d\n", utils.GlobalObject.Version, utils.GlobalObject.MaxConn, utils.GlobalObject.MaxPackageSize)
 	fmt.Printf("[Start] Server Listener at IP: %s, port: %d\n", s.IP, s.Port)
 
 	go func() {
@@ -54,8 +56,15 @@ func (s *Server) Start() {
 				continue
 			}
 
+			// 设置最大连接个数的判断, 如果超过最大连接, 那么关闭次新连接
+			if s.ConnMgr.Len() >= utils.GlobalObject.MaxConn {
+				fmt.Println("too many conn")
+				conn.Close()
+				continue
+			}
+
 			// 将conn和connection绑定
-			dealConn := NewConnection(conn, cid, s.MsgHandler)
+			dealConn := NewConnection(s, conn, cid, s.MsgHandler)
 			cid++
 
 			dealConn.Start()
@@ -65,6 +74,8 @@ func (s *Server) Start() {
 
 func (s *Server) Stop() {
 	// 将一些服务器的资源，状态或者一些已经开辟的连接信息进行停止后者回收
+	fmt.Println("[STOP] zinx stop ", s.Name)
+	s.ConnMgr.ClearConn()
 }
 
 func (s *Server) Serve() {
@@ -87,7 +98,12 @@ func NewServer(name string) iface.IServer {
 		IP:         utils.GlobalObject.Host,
 		Port:       utils.GlobalObject.TcpPort,
 		MsgHandler: NewMsgHandle(),
+		ConnMgr:    NewConnManager(),
 	}
 
 	return s
+}
+
+func (s *Server) GetConnMgr() iface.IConnManager {
+	return s.ConnMgr
 }
