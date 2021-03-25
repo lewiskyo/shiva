@@ -15,7 +15,11 @@ type Connection struct {
 
 	isClosed bool
 
+	// 告知当前连接已经退出/停止, 由Reader告知Writer退出
 	ExitChan chan bool
+
+	// 无缓冲的管道, 用于读写Goroutine之间的消息通信
+	msgChan chan []byte
 
 	// 消息的管理MsgID与对应的api处理关系
 	MsgHandler iface.IMsgHandler
@@ -26,6 +30,7 @@ func NewConnection(conn *net.TCPConn, connID uint32, msgHandler iface.IMsgHandle
 		Conn:       conn,
 		ConnID:     connID,
 		MsgHandler: msgHandler,
+		msgChan:    make(chan []byte),
 		isClosed:   false,
 		ExitChan:   make(chan bool, 1),
 	}
@@ -36,6 +41,7 @@ func NewConnection(conn *net.TCPConn, connID uint32, msgHandler iface.IMsgHandle
 func (c *Connection) StartReader() {
 	fmt.Println("Reader Goroutine is running ...")
 	defer fmt.Println("connID = ", c.ConnID, "Reader is exit, remote addr is ", c.RemoteAddr().String())
+	// 下面for循环只要break, reader就会退出, 关闭reader 和 writer goroutine
 	defer c.Stop()
 
 	for {
@@ -75,10 +81,30 @@ func (c *Connection) StartReader() {
 	}
 }
 
+// 写消息goroutine, 专门发送给客户端消息的模块
+func (c *Connection) StartWriter() {
+	fmt.Println("writer goroutine is running..")
+	defer fmt.Println(c.RemoteAddr().String(), "[conn write exit]")
+	for {
+		select {
+		case data := <-c.msgChan:
+			if _, err := c.Conn.Write(data); err != nil {
+				fmt.Println("send data err: ", err)
+				return
+			}
+		case <-c.ExitChan:
+			//  代表Reader已经退出, 此时Writer也要退出
+			return
+		}
+	}
+
+}
+
 func (c *Connection) Start() {
 	fmt.Println("Conn Start() ... ConnID = ", c.ConnID)
 
 	go c.StartReader()
+	go c.StartWriter()
 }
 
 func (c *Connection) Stop() {
@@ -92,7 +118,9 @@ func (c *Connection) Stop() {
 
 	c.Conn.Close()
 
+	c.ExitChan <- true
 	close(c.ExitChan)
+	close(c.msgChan)
 }
 
 func (c *Connection) GetTCPConnection() *net.TCPConn {
@@ -121,10 +149,8 @@ func (c *Connection) SendMsg(Id uint32, data []byte) error {
 		return errors.New("pack error msg")
 	}
 
-	if _, err := c.Conn.Write(binaryMsg); err != nil {
-		fmt.Println("sendmsg write err", err)
-		return errors.New("Write msg id")
-	}
+	// 将消息发给writer
+	c.msgChan <- binaryMsg
 
 	return nil
 }
