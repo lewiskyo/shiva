@@ -3,10 +3,10 @@ package core
 import (
 	"fmt"
 	"math/rand"
-	"shiva/iface"
+	"sync"
 	"shiva/pb"
 	"shiva/proto"
-	"sync"
+	"shiva/iface"
 )
 
 type Player struct {
@@ -107,4 +107,76 @@ func (p *Player) Talk(content string) {
 	for _, p := range players {
 		p.SendMsg(200, msg)
 	}
+}
+
+// 同步玩家上线的位置消息
+func (p *Player) SyncSurrounding() {
+	// 1. 获取当前玩家周围的玩家有哪些(9宫格)
+	players := p.GetSurroundPlayers()
+
+	// 2. 将当前玩家的位置信息通过MsgID:200发给周围的玩家,(让其他玩家看到自己)
+	proto_msg := &pb.BroadCast{
+		Pid: p.Pid,
+		Tp:  2,
+		Data: &pb.BroadCast_P{
+			P: &pb.Position{
+				X: p.X,
+				Y: p.Y,
+				Z: p.Z,
+				V: p.V,
+			},
+		},
+	}
+	for _, player := range players {
+		player.SendMsg(200, proto_msg)
+	}
+
+	// 3. 将周围的全部玩家位置信息发送给当前的玩家 MsgID:202科幻段, (让自己看到其他玩家)
+	pb_players := make([]*pb.Player, 0, len(players))
+	for _, player := range players {
+		pb_players = append(pb_players, &pb.Player{
+			Pid: player.Pid,
+			P: &pb.Position{
+				X: player.X,
+				Y: player.Y,
+				Z: player.Z,
+				V: player.V,
+			},
+		})
+	}
+
+	proto_msg2 := &pb.SyncPlayers{
+		Ps: pb_players,
+	}
+	p.SendMsg(202, proto_msg2)
+}
+
+func (p *Player) UpdatePos(x, y, z, v float32) {
+	proto_msg := &pb.BroadCast{
+		Pid: p.Pid,
+		Tp:  4,
+		Data: &pb.BroadCast_P{
+			P: &pb.Position{
+				X: x,
+				Y: y,
+				Z: z,
+				V: v,
+			},
+		},
+	}
+
+	players := p.GetSurroundPlayers()
+	for _, player := range players {
+		player.SendMsg(200, proto_msg)
+	}
+}
+
+func (p *Player) GetSurroundPlayers() []*Player {
+	pids := WorldMgrObj.AoiMgr.GetPidsByPos(p.X, p.Z)
+	players := make([]*Player, 0, len(pids))
+	for _, pid := range pids {
+		players = append(players, WorldMgrObj.GetPlayerByPid(int32(pid)))
+	}
+
+	return players
 }

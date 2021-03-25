@@ -2,11 +2,11 @@ package apis
 
 import (
 	"fmt"
-	"shiva/core"
 	"shiva/iface"
+	"shiva/net"
+	"shiva/core"
 	"shiva/pb"
 	"shiva/proto"
-	"shiva/net"
 )
 
 // 世界聊天 路由业务
@@ -16,8 +16,8 @@ type WorldChatApi struct {
 
 func (wc *WorldChatApi) Handle(request iface.IRequest) {
 	// 1. 解析协议
-	proto_msg := &pb.Talk{}
-	err := proto.Unmarshal(request.GetData(), proto_msg)
+	protoMsg := &pb.Talk{}
+	err := proto.Unmarshal(request.GetData(), protoMsg)
 	if err != nil {
 		fmt.Println("talk unmarshal error, ", err)
 		return
@@ -29,5 +29,5 @@ func (wc *WorldChatApi) Handle(request iface.IRequest) {
 	// 3. 根据pid获取玩家对象
 	player := core.WorldMgrObj.GetPlayerByPid(pid.(int32))
 
-	player.Talk(proto_msg.GetContent())
+	player.Talk(protoMsg.GetContent())
 }
