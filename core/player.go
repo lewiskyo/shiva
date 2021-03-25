@@ -180,3 +180,18 @@ func (p *Player) GetSurroundPlayers() []*Player {
 
 	return players
 }
+
+func (p *Player) Offline() {
+	players := p.GetSurroundPlayers()
+
+	proto_msg := &pb.SyncPid{
+		Pid: p.Pid,
+	}
+
+	for _, surroundPlayer := range players {
+		surroundPlayer.SendMsg(201, proto_msg)
+	}
+
+	WorldMgrObj.AoiMgr.RemoveFromGridByPos(int(p.Pid), p.X, p.Z)
+	WorldMgrObj.RemovePlayer(p.Pid)
+}

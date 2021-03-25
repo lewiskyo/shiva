@@ -30,15 +30,20 @@ func OnConnectionAdd(conn iface.IConnection) {
 	fmt.Println("player pid: ", player.Pid, " is login!!!")
 }
 
-func DoConnectionStop(conn iface.IConnection) {
-	fmt.Println("===> DoConnectionStop")
+func OnConnectionStop(conn iface.IConnection) {
+	pid, err := conn.GetProperty("pid")
+	if err != nil{
+		return
+	}
+	player := core.WorldMgrObj.GetPlayerByPid(pid.(int32))
+	player.Offline()
 }
 
 func main() {
 	s := net.NewServer("[v0.9]")
 
 	s.SetOnConnStart(OnConnectionAdd)
-	s.SetOnConnStop(DoConnectionStop)
+	s.SetOnConnStop(OnConnectionStop)
 
 	s.AddRouter(2, &apis.WorldChatApi{})
 	s.AddRouter(3, &apis.MoveApi{})
