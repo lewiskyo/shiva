@@ -1,7 +1,6 @@
 package net
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"shiva/iface"
@@ -16,17 +15,8 @@ type Server struct {
 	IP string
 	// 服务器监听的端口
 	Port int
-}
-
-func CallBackToClient(conn *net.TCPConn, data []byte, cnt int) error {
-	fmt.Println("[Conn Handle] callbacktoclient...")
-	if _, err := conn.Write(data[:cnt]); err != nil {
-		fmt.Println("write back buf err: ", err)
-		return errors.New("call back to client err")
-	}
-
-	return nil
-
+	// 当前的Server添加一个router, server注册的链接对应的处理业务
+	Router iface.IRouter
 }
 
 func (s *Server) Start() {
@@ -59,7 +49,7 @@ func (s *Server) Start() {
 			}
 
 			// 将conn和connection绑定
-			dealConn := NewConnection(conn, cid, CallBackToClient)
+			dealConn := NewConnection(conn, cid, s.Router)
 			cid++
 
 			dealConn.Start()
@@ -79,6 +69,11 @@ func (s *Server) Serve() {
 	select {}
 }
 
+func (s *Server) AddRouter(router iface.IRouter) {
+	s.Router = router
+	fmt.Println("Add Router success!!")
+}
+
 // 初始化Server模块的方法
 func NewServer(name string) iface.IServer {
 	s := &Server{
@@ -86,6 +81,7 @@ func NewServer(name string) iface.IServer {
 		IPVersion: "tcp4",
 		IP:        "0.0.0.0",
 		Port:      8001,
+		Router:    nil,
 	}
 
 	return s
