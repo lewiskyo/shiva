@@ -78,7 +78,7 @@ func (s *Server) Start() {
 
 func (s *Server) Stop() {
 	// 将一些服务器的资源，状态或者一些已经开辟的连接信息进行停止后者回收
-	fmt.Println("[STOP] zinx stop ", s.Name)
+	fmt.Println("[STOP] shiva stop ", s.Name)
 	s.ConnMgr.ClearConn()
 }
 

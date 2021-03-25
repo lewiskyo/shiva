@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"shiva/apis"
 	"shiva/core"
 	"shiva/iface"
+	"shiva/log"
 	"shiva/net"
 )
 
@@ -27,7 +27,7 @@ func OnConnectionAdd(conn iface.IConnection) {
 	// 同步周边的玩家, 告知他们当前玩家已经上线, 广播当前玩家的位置信息
 	player.SyncSurrounding()
 
-	fmt.Println("player pid: ", player.Pid, " is login!!!")
+	log.Info("player pid: ", player.Pid, "is login!!!")
 }
 
 func OnConnectionStop(conn iface.IConnection) {
@@ -40,7 +40,7 @@ func OnConnectionStop(conn iface.IConnection) {
 }
 
 func main() {
-	s := net.NewServer("[v0.9]")
+	s := net.NewServer("[shiva v0.9]")
 
 	s.SetOnConnStart(OnConnectionAdd)
 	s.SetOnConnStop(OnConnectionStop)

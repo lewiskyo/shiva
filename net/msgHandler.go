@@ -3,6 +3,7 @@ package net
 import (
 	"fmt"
 	"shiva/iface"
+	"shiva/log"
 	"shiva/utils"
 )
 
@@ -62,7 +63,7 @@ func (mh *MsgHandler) StartWorkerPool() {
 }
 
 func (mh *MsgHandler) StartOneWorker(workerID int, taskQueue chan iface.IRequest) {
-	fmt.Println("Worker ID = ", workerID, "is started...")
+	log.Info("Worker ID = ", workerID, "is started...")
 
 	for {
 		select {
