@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	s := net.NewServer("v0.1")
+	s := net.NewServer("v0.2")
 
 	s.Serve()
 }

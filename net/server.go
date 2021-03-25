@@ -1,6 +1,7 @@
 package net
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"shiva/iface"
@@ -15,6 +16,17 @@ type Server struct {
 	IP string
 	// 服务器监听的端口
 	Port int
+}
+
+func CallBackToClient(conn *net.TCPConn, data []byte, cnt int) error {
+	fmt.Println("[Conn Handle] callbacktoclient...")
+	if _, err := conn.Write(data[:cnt]); err != nil {
+		fmt.Println("write back buf err: ", err)
+		return errors.New("call back to client err")
+	}
+
+	return nil
+
 }
 
 func (s *Server) Start() {
@@ -36,6 +48,9 @@ func (s *Server) Start() {
 
 		fmt.Println("start server succ, listening")
 
+		var cid uint32
+		cid = 0
+
 		for {
 			conn, err := listener.AcceptTCP()
 			if err != nil {
@@ -43,21 +58,11 @@ func (s *Server) Start() {
 				continue
 			}
 
-			go func() {
-				for {
-					buf := make([]byte, 512)
-					cnt, err := conn.Read(buf)
-					if err != nil {
-						fmt.Println("recv buff err, ", err)
-						continue
-					}
-					fmt.Printf("recv client buff %s, cnt: %d\n", buf, cnt)
-					if _, err := conn.Write(buf[:cnt]); err != nil {
-						fmt.Println("write buff err, ", err)
-						continue
-					}
-				}
-			}()
+			// 将conn和connection绑定
+			dealConn := NewConnection(conn, cid, CallBackToClient)
+			cid++
+
+			dealConn.Start()
 		}
 	}()
 }
