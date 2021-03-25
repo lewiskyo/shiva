@@ -1,9 +1,10 @@
 package net
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net"
-	"shiva/utils"
 	"shiva/iface"
 )
 
@@ -38,16 +39,35 @@ func (c *Connection) StartReader() {
 	defer c.Stop()
 
 	for {
-		buf := make([]byte, utils.GlobalObject.MaxPackageSize)
-		_, err := c.Conn.Read(buf)
+		dp := NewDataPack()
+		headData := make([]byte, dp.GetHeadLen())
+
+		_, err := io.ReadFull(c.Conn, headData)
 		if err != nil {
-			fmt.Println("recv buff err", err)
-			continue
+			fmt.Println("io readfull headdata err, ", err)
+			break
 		}
+
+		msg, err := dp.Unpack(headData)
+		if err != nil {
+			fmt.Println("dataunpack err, ", err)
+			break
+		}
+
+		var data []byte
+		if msg.GetMsgLen() > 0 {
+			data = make([]byte, msg.GetMsgLen())
+			if _, err := io.ReadFull(c.Conn, data); err != nil {
+				fmt.Println("io readfull data err, ", err)
+				break
+			}
+		}
+
+		msg.SetData(data)
 
 		req := Request{
 			conn: c,
-			data: buf,
+			msg:  msg,
 		}
 
 		// 执行注册的路由方法
@@ -92,6 +112,24 @@ func (c *Connection) RemoteAddr() net.Addr {
 	return c.Conn.RemoteAddr()
 }
 
-func (c *Connection) Send(data []byte) error {
+func (c *Connection) SendMsg(Id uint32, data []byte) error {
+	if c.isClosed == true {
+		return errors.New("Connection closed when send msg")
+	}
+
+	// 将data进行封包 MsgDataLen|Id|Data
+	dp := NewDataPack()
+
+	binaryMsg, err := dp.Pack(NewMessagePackage(Id, data))
+	if err != nil {
+		fmt.Println("sendmsg pack err", err)
+		return errors.New("pack error msg")
+	}
+
+	if _, err := c.Conn.Write(binaryMsg); err != nil {
+		fmt.Println("sendmsg write err", err)
+		return errors.New("Write msg id")
+	}
+
 	return nil
 }

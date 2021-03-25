@@ -22,7 +22,10 @@ func (this *PingRouter) PreHandle(request iface.IRequest) {
 // Handle
 func (this *PingRouter) Handle(request iface.IRequest) {
 	fmt.Println("Call Router Handle...")
-	_, err := request.GetConnection().GetTCPConnection().Write([]byte("ping ping ping..."))
+
+	fmt.Println("recv from client, msgid: ", request.GetMsgID(), " data: ", string(request.GetData()))
+
+	err := request.GetConnection().SendMsg(1, []byte("ping...  ping... ping..."))
 	if err != nil {
 		fmt.Println("call back ping ping ping error")
 	}
@@ -38,7 +41,7 @@ func (this *PingRouter) PostHandle(request iface.IRequest) {
 }
 
 func main() {
-	s := net.NewServer("[v0.4]")
+	s := net.NewServer("[v0.5]")
 
 	s.AddRouter(&PingRouter{})
 
