@@ -3,6 +3,7 @@ package net
 import (
 	"fmt"
 	"net"
+	"shiva/utils"
 	"shiva/iface"
 )
 
@@ -37,7 +38,7 @@ func (c *Connection) StartReader() {
 	defer c.Stop()
 
 	for {
-		buf := make([]byte, 512)
+		buf := make([]byte, utils.GlobalObject.MaxPackageSize)
 		_, err := c.Conn.Read(buf)
 		if err != nil {
 			fmt.Println("recv buff err", err)
@@ -56,7 +57,6 @@ func (c *Connection) StartReader() {
 			c.Router.Handle(request)
 			c.Router.PostHandle(request)
 		}(&req)
-
 	}
 }
 

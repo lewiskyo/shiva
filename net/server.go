@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"shiva/iface"
+	"shiva/utils"
 )
 
 type Server struct {
@@ -20,6 +21,8 @@ type Server struct {
 }
 
 func (s *Server) Start() {
+	fmt.Printf("[Shiva] ServerName: %s, listen at ip: %s, port: %d\n", utils.GlobalObject.Name, utils.GlobalObject.Host, utils.GlobalObject.TcpPort)
+	fmt.Printf("[Shiva] Version: %s, maxconn: %d, maxpackagesize: %d\n", utils.GlobalObject.Version, utils.GlobalObject.MaxConn, utils.GlobalObject.MaxPackageSize)
 	fmt.Printf("[Start] Server Listener at IP: %s, port: %d\n", s.IP, s.Port)
 
 	go func() {
@@ -77,10 +80,10 @@ func (s *Server) AddRouter(router iface.IRouter) {
 // 初始化Server模块的方法
 func NewServer(name string) iface.IServer {
 	s := &Server{
-		Name:      name,
+		Name:      utils.GlobalObject.Name,
 		IPVersion: "tcp4",
-		IP:        "0.0.0.0",
-		Port:      8001,
+		IP:        utils.GlobalObject.Host,
+		Port:      utils.GlobalObject.TcpPort,
 		Router:    nil,
 	}
 
