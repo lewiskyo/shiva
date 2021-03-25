@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"shiva/iface"
+	"shiva/utils"
 )
 
 type Connection struct {
@@ -76,8 +77,14 @@ func (c *Connection) StartReader() {
 			msg:  msg,
 		}
 
-		// 根据绑定好的msgID找到对应的api业务执行
-		go c.MsgHandler.DoMsgHandler(&req)
+		if utils.GlobalObject.WorkerPoolSize > 0 {
+			// 已经开辟了工作池和消息队列
+			c.MsgHandler.SendMsgToTaskQueue(&req)
+		} else {
+			// 根据绑定好的msgID找到对应的api业务执行
+			go c.MsgHandler.DoMsgHandler(&req)
+		}
+
 	}
 }
 

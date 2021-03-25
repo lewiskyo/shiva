@@ -3,8 +3,8 @@ package net
 import (
 	"fmt"
 	"net"
-	"shiva/utils"
 	"shiva/iface"
+	"shiva/utils"
 )
 
 type Server struct {
@@ -21,11 +21,14 @@ type Server struct {
 }
 
 func (s *Server) Start() {
-	fmt.Printf("[Shiva] ServerName: %s, listen at ip: %s, port: %d\n", utils.GlobalObject.Name, utils.GlobalObject.Host, utils.GlobalObject.TcpPort)
-	fmt.Printf("[Shiva] Version: %s, maxconn: %d, maxpackagesize: %d\n", utils.GlobalObject.Version, utils.GlobalObject.MaxConn, utils.GlobalObject.MaxPackageSize)
+	fmt.Printf("[Zinx] ServerName: %s, listen at ip: %s, port: %d\n", utils.GlobalObject.Name, utils.GlobalObject.Host, utils.GlobalObject.TcpPort)
+	fmt.Printf("[Zinx] Version: %s, maxconn: %d, maxpackagesize: %d\n", utils.GlobalObject.Version, utils.GlobalObject.MaxConn, utils.GlobalObject.MaxPackageSize)
 	fmt.Printf("[Start] Server Listener at IP: %s, port: %d\n", s.IP, s.Port)
 
 	go func() {
+		// 开启消息队列以及worker工作池
+		s.MsgHandler.StartWorkerPool()
+
 		addr, err := net.ResolveTCPAddr(s.IPVersion, fmt.Sprintf("%s:%d", s.IP, s.Port))
 
 		if err != nil {
