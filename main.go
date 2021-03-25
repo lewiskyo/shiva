@@ -3,104 +3,32 @@ package main
 import (
 	"fmt"
 	"shiva/iface"
+	"shiva/core"
 	"shiva/net"
 )
 
-type PingRouter struct {
-	net.BaseRouter
-}
+func OnConnectionAdd(conn iface.IConnection) {
+	// 创建一个player对象
+	player := core.NewPlayer(conn)
 
-// PreHandle
-func (this *PingRouter) PreHandle(request iface.IRequest) {
-	fmt.Println("Call PingRouter PreHandle...")
-	_, err := request.GetConnection().GetTCPConnection().Write([]byte("before ping..."))
-	if err != nil {
-		fmt.Println("call back before ping error")
-	}
-}
+	// 给客户端发送MsgID:1的消息
+	player.SyncPid()
 
-// Handle
-func (this *PingRouter) Handle(request iface.IRequest) {
-	fmt.Println("Call PingRouter Handle...")
+	// 给客户端发送MsgID:200的消息
+	player.BroadCastStartPosition()
 
-	fmt.Println("recv from client, msgid: ", request.GetMsgID(), " data: ", string(request.GetData()))
-
-	err := request.GetConnection().SendMsg(1, []byte("ping...  ping... ping..."))
-	if err != nil {
-		fmt.Println("call back ping ping ping error")
-	}
-}
-
-// PostHandle
-func (this *PingRouter) PostHandle(request iface.IRequest) {
-	fmt.Println("Call PingRouter PostHandle...")
-	_, err := request.GetConnection().GetTCPConnection().Write([]byte("after ping..."))
-	if err != nil {
-		fmt.Println("call back after ping error")
-	}
-}
-
-type HelloRouter struct {
-	net.BaseRouter
-}
-
-// PreHandle
-func (this *HelloRouter) PreHandle(request iface.IRequest) {
-	fmt.Println("Call HelloRouter PreHandle...")
-	_, err := request.GetConnection().GetTCPConnection().Write([]byte("before ping..."))
-	if err != nil {
-		fmt.Println("call back before ping error")
-	}
-}
-
-// Handle
-func (this *HelloRouter) Handle(request iface.IRequest) {
-	fmt.Println("Call HelloRouter Handle...")
-
-	fmt.Println("recv from client, msgid: ", request.GetMsgID(), " data: ", string(request.GetData()))
-
-	err := request.GetConnection().SendMsg(1, []byte("hello...  hello... hello..."))
-	if err != nil {
-		fmt.Println("call back hello error")
-	}
-}
-
-// PostHandle
-func (this *HelloRouter) PostHandle(request iface.IRequest) {
-	fmt.Println("Call HelloRouter PostHandle...")
-	_, err := request.GetConnection().GetTCPConnection().Write([]byte("after ping..."))
-	if err != nil {
-		fmt.Println("call back after hello error")
-	}
-}
-
-func DoConnectionBegin(conn iface.IConnection) {
-	fmt.Println("===> DoConnectionBegin")
-	if err := conn.SendMsg(101, []byte("doconnection begin")); err != nil {
-		fmt.Println(err)
-	}
-
-	// 给当前连接设置一些属性
-	conn.SetProperty("haha", "hahahahaha")
+	fmt.Println("player pid: ", player.Pid, " is login!!!")
 }
 
 func DoConnectionStop(conn iface.IConnection) {
 	fmt.Println("===> DoConnectionStop")
-	value, _ := conn.GetProperty("haha")
-	fmt.Println("conn stop, haha value ", value)
-	if err := conn.SendMsg(101, []byte("doconnection stop")); err != nil {
-		fmt.Println(err)
-	}
 }
 
 func main() {
-	s := net.NewServer("[v0.8]")
+	s := net.NewServer("[v0.9]")
 
-	s.SetOnConnStart(DoConnectionBegin)
+	s.SetOnConnStart(OnConnectionAdd)
 	s.SetOnConnStop(DoConnectionStop)
-
-	s.AddRouter(0, &PingRouter{})
-	s.AddRouter(1, &HelloRouter{})
 
 	s.Serve()
 }
