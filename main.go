@@ -79,17 +79,22 @@ func DoConnectionBegin(conn iface.IConnection) {
 	if err := conn.SendMsg(101, []byte("doconnection begin")); err != nil {
 		fmt.Println(err)
 	}
+
+	// 给当前连接设置一些属性
+	conn.SetProperty("haha", "hahahahaha")
 }
 
 func DoConnectionStop(conn iface.IConnection) {
 	fmt.Println("===> DoConnectionStop")
+	value, _ := conn.GetProperty("haha")
+	fmt.Println("conn stop, haha value ", value)
 	if err := conn.SendMsg(101, []byte("doconnection stop")); err != nil {
 		fmt.Println(err)
 	}
 }
 
 func main() {
-	s := net.NewServer("[v0.7]")
+	s := net.NewServer("[v0.8]")
 
 	s.SetOnConnStart(DoConnectionBegin)
 	s.SetOnConnStop(DoConnectionStop)

@@ -7,6 +7,7 @@ import (
 	"net"
 	"shiva/iface"
 	"shiva/utils"
+	"sync"
 )
 
 type Connection struct {
@@ -27,6 +28,11 @@ type Connection struct {
 
 	// 消息的管理MsgID与对应的api处理关系
 	MsgHandler iface.IMsgHandler
+
+	// 链接属性集合
+	property map[string]interface{}
+	// 保护链接属性的锁
+	propertyLock sync.RWMutex
 }
 
 func NewConnection(server iface.IServer, conn *net.TCPConn, connID uint32, msgHandler iface.IMsgHandler) *Connection {
@@ -38,6 +44,7 @@ func NewConnection(server iface.IServer, conn *net.TCPConn, connID uint32, msgHa
 		msgChan:    make(chan []byte),
 		isClosed:   false,
 		ExitChan:   make(chan bool, 1),
+		property:   make(map[string]interface{}),
 	}
 	c.Server.GetConnMgr().Add(c)
 	return c
@@ -172,4 +179,30 @@ func (c *Connection) SendMsg(Id uint32, data []byte) error {
 	c.msgChan <- binaryMsg
 
 	return nil
+}
+
+func (c *Connection) SetProperty(key string, value interface{}) {
+	c.propertyLock.Lock()
+	defer c.propertyLock.Unlock()
+
+	c.property[key] = value
+}
+
+func (c *Connection) GetProperty(key string) (interface{}, error) {
+	c.propertyLock.RLock()
+	defer c.propertyLock.RUnlock()
+
+	if value, ok := c.property[key]; ok {
+		return value, nil
+	} else {
+		return nil, errors.New("no property found")
+	}
+
+}
+
+func (c *Connection) RemoveProperty(key string) {
+	c.propertyLock.Lock()
+	defer c.propertyLock.Unlock()
+
+	delete(c.property, key)
 }
