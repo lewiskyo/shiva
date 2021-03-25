@@ -13,4 +13,12 @@ type IServer interface {
 
 	// 获取当前Server的链接管理
 	GetConnMgr() IConnManager
+
+	SetOnConnStart(func(IConnection))
+
+	SetOnConnStop(func(IConnection))
+
+	CallOnConnStart(IConnection)
+
+	CallOnConnStop(IConnection)
 }

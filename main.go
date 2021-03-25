@@ -74,8 +74,25 @@ func (this *HelloRouter) PostHandle(request iface.IRequest) {
 	}
 }
 
+func DoConnectionBegin(conn iface.IConnection) {
+	fmt.Println("===> DoConnectionBegin")
+	if err := conn.SendMsg(101, []byte("doconnection begin")); err != nil {
+		fmt.Println(err)
+	}
+}
+
+func DoConnectionStop(conn iface.IConnection) {
+	fmt.Println("===> DoConnectionStop")
+	if err := conn.SendMsg(101, []byte("doconnection stop")); err != nil {
+		fmt.Println(err)
+	}
+}
+
 func main() {
-	s := net.NewServer("[v0.5]")
+	s := net.NewServer("[v0.7]")
+
+	s.SetOnConnStart(DoConnectionBegin)
+	s.SetOnConnStop(DoConnectionStop)
 
 	s.AddRouter(0, &PingRouter{})
 	s.AddRouter(1, &HelloRouter{})

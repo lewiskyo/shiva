@@ -116,6 +116,9 @@ func (c *Connection) Start() {
 
 	go c.StartReader()
 	go c.StartWriter()
+
+	// 按照开发者传递进来的 创建链接后的业务hook函数
+	c.Server.CallOnConnStart(c)
 }
 
 func (c *Connection) Stop() {
@@ -126,6 +129,8 @@ func (c *Connection) Stop() {
 	}
 
 	c.isClosed = true
+
+	c.Server.CallOnConnStop(c)
 
 	c.Conn.Close()
 

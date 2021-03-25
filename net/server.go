@@ -20,6 +20,10 @@ type Server struct {
 	MsgHandler iface.IMsgHandler
 	// 当前server的链接管理器
 	ConnMgr iface.IConnManager
+	// 该Server创建连接之后自动调用Hook函数 -- OnConnStart
+	OnConnStart func(connection iface.IConnection)
+	// 该Server销毁链接之前自动调用Hook函数 -- OnConnStop
+	OnConnStop func(connection iface.IConnection)
 }
 
 func (s *Server) Start() {
@@ -106,4 +110,30 @@ func NewServer(name string) iface.IServer {
 
 func (s *Server) GetConnMgr() iface.IConnManager {
 	return s.ConnMgr
+}
+
+// 注册OnConnStart钩子函数方法
+func (s *Server) SetOnConnStart(f func(iface.IConnection)) {
+	s.OnConnStart = f
+}
+
+// 注册OnConnStop钩子函数方法
+func (s *Server) SetOnConnStop(f func(iface.IConnection)) {
+	s.OnConnStop = f
+}
+
+// 调用OnConnStart钩子函数
+func (s *Server) CallOnConnStart(connection iface.IConnection) {
+	if s.OnConnStart != nil {
+		fmt.Println("call onConnStart!!!")
+		s.OnConnStart(connection)
+	}
+}
+
+// 调用OnConnStop钩子函数
+func (s *Server) CallOnConnStop(connection iface.IConnection) {
+	if s.OnConnStart != nil {
+		fmt.Println("call onConnStart!!!")
+		s.OnConnStop(connection)
+	}
 }
