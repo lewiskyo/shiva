@@ -12,7 +12,7 @@ type PingRouter struct {
 
 // PreHandle
 func (this *PingRouter) PreHandle(request iface.IRequest) {
-	fmt.Println("Call Router PreHandle...")
+	fmt.Println("Call PingRouter PreHandle...")
 	_, err := request.GetConnection().GetTCPConnection().Write([]byte("before ping..."))
 	if err != nil {
 		fmt.Println("call back before ping error")
@@ -21,7 +21,7 @@ func (this *PingRouter) PreHandle(request iface.IRequest) {
 
 // Handle
 func (this *PingRouter) Handle(request iface.IRequest) {
-	fmt.Println("Call Router Handle...")
+	fmt.Println("Call PingRouter Handle...")
 
 	fmt.Println("recv from client, msgid: ", request.GetMsgID(), " data: ", string(request.GetData()))
 
@@ -33,17 +33,52 @@ func (this *PingRouter) Handle(request iface.IRequest) {
 
 // PostHandle
 func (this *PingRouter) PostHandle(request iface.IRequest) {
-	fmt.Println("Call Router PostHandle...")
+	fmt.Println("Call PingRouter PostHandle...")
 	_, err := request.GetConnection().GetTCPConnection().Write([]byte("after ping..."))
 	if err != nil {
 		fmt.Println("call back after ping error")
 	}
 }
 
+type HelloRouter struct {
+	net.BaseRouter
+}
+
+// PreHandle
+func (this *HelloRouter) PreHandle(request iface.IRequest) {
+	fmt.Println("Call HelloRouter PreHandle...")
+	_, err := request.GetConnection().GetTCPConnection().Write([]byte("before ping..."))
+	if err != nil {
+		fmt.Println("call back before ping error")
+	}
+}
+
+// Handle
+func (this *HelloRouter) Handle(request iface.IRequest) {
+	fmt.Println("Call HelloRouter Handle...")
+
+	fmt.Println("recv from client, msgid: ", request.GetMsgID(), " data: ", string(request.GetData()))
+
+	err := request.GetConnection().SendMsg(1, []byte("hello...  hello... hello..."))
+	if err != nil {
+		fmt.Println("call back hello error")
+	}
+}
+
+// PostHandle
+func (this *HelloRouter) PostHandle(request iface.IRequest) {
+	fmt.Println("Call HelloRouter PostHandle...")
+	_, err := request.GetConnection().GetTCPConnection().Write([]byte("after ping..."))
+	if err != nil {
+		fmt.Println("call back after hello error")
+	}
+}
+
 func main() {
 	s := net.NewServer("[v0.5]")
 
-	s.AddRouter(&PingRouter{})
+	s.AddRouter(0, &PingRouter{})
+	s.AddRouter(1, &HelloRouter{})
 
 	s.Serve()
 }

@@ -3,8 +3,8 @@ package net
 import (
 	"fmt"
 	"net"
-	"shiva/iface"
 	"shiva/utils"
+	"shiva/iface"
 )
 
 type Server struct {
@@ -16,8 +16,8 @@ type Server struct {
 	IP string
 	// 服务器监听的端口
 	Port int
-	// 当前的Server添加一个router, server注册的链接对应的处理业务
-	Router iface.IRouter
+	// 当前server的消息管理模块, 用来绑定MsgID和对应处理业务API关系
+	MsgHandler iface.IMsgHandler
 }
 
 func (s *Server) Start() {
@@ -52,7 +52,7 @@ func (s *Server) Start() {
 			}
 
 			// 将conn和connection绑定
-			dealConn := NewConnection(conn, cid, s.Router)
+			dealConn := NewConnection(conn, cid, s.MsgHandler)
 			cid++
 
 			dealConn.Start()
@@ -72,19 +72,18 @@ func (s *Server) Serve() {
 	select {}
 }
 
-func (s *Server) AddRouter(router iface.IRouter) {
-	s.Router = router
-	fmt.Println("Add Router success!!")
+func (s *Server) AddRouter(msgID uint32, router iface.IRouter) {
+	s.MsgHandler.AddRouter(msgID, router)
 }
 
 // 初始化Server模块的方法
 func NewServer(name string) iface.IServer {
 	s := &Server{
-		Name:      utils.GlobalObject.Name,
-		IPVersion: "tcp4",
-		IP:        utils.GlobalObject.Host,
-		Port:      utils.GlobalObject.TcpPort,
-		Router:    nil,
+		Name:       utils.GlobalObject.Name,
+		IPVersion:  "tcp4",
+		IP:         utils.GlobalObject.Host,
+		Port:       utils.GlobalObject.TcpPort,
+		MsgHandler: NewMsgHandle(),
 	}
 
 	return s

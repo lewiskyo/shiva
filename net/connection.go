@@ -17,17 +17,17 @@ type Connection struct {
 
 	ExitChan chan bool
 
-	// 该链接处理的方法Router
-	Router iface.IRouter
+	// 消息的管理MsgID与对应的api处理关系
+	MsgHandler iface.IMsgHandler
 }
 
-func NewConnection(conn *net.TCPConn, connID uint32, router iface.IRouter) *Connection {
+func NewConnection(conn *net.TCPConn, connID uint32, msgHandler iface.IMsgHandler) *Connection {
 	c := &Connection{
-		Conn:     conn,
-		ConnID:   connID,
-		Router:   router,
-		isClosed: false,
-		ExitChan: make(chan bool, 1),
+		Conn:       conn,
+		ConnID:     connID,
+		MsgHandler: msgHandler,
+		isClosed:   false,
+		ExitChan:   make(chan bool, 1),
 	}
 
 	return c
@@ -70,13 +70,8 @@ func (c *Connection) StartReader() {
 			msg:  msg,
 		}
 
-		// 执行注册的路由方法
-		go func(request iface.IRequest) {
-			// 从路由中找到注册绑定的conn对应router调用
-			c.Router.PreHandle(request)
-			c.Router.Handle(request)
-			c.Router.PostHandle(request)
-		}(&req)
+		// 根据绑定好的msgID找到对应的api业务执行
+		go c.MsgHandler.DoMsgHandler(&req)
 	}
 }
 
